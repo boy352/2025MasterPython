@@ -1,0 +1,149 @@
+作业1:
+import time
+import random
+
+# 创建 10000×10000 的 list 矩阵
+def create_list_matrix(size):
+    return [[random.randint(1, 100) for _ in range(size)] for _ in range(size)]
+
+# 创建 10000×10000 的 tuple 矩阵
+def create_tuple_matrix(size):
+    return tuple(tuple(random.randint(1, 100) for _ in range(size)) for _ in range(size))
+
+# 修改 list 矩阵
+def modify_list_matrix(matrix, size):
+    for _ in range(size):
+        i, j = random.randint(0, size - 1), random.randint(0, size - 1)
+        matrix[i][j] = random.randint(1, 100)
+
+# 修改 tuple 矩阵（需要重新构造）
+def modify_tuple_matrix(matrix, size):
+    new_matrix = list(matrix)
+    for _ in range(size):
+        i, j = random.randint(0, size - 1), random.randint(0, size - 1)
+        new_matrix[i] = new_matrix[i][:j] + (random.randint(1, 100),) + new_matrix[i][j + 1:]
+    return tuple(new_matrix)
+
+# 测试时间消耗
+def test_time_consumption():
+    size = 10000
+    print("Creating list matrix...")
+    list_matrix = create_list_matrix(size)
+    print("Creating tuple matrix...")
+    tuple_matrix = create_tuple_matrix(size)
+
+    print("Modifying list matrix...")
+    start_time = time.time()
+    modify_list_matrix(list_matrix, size)
+    list_time = time.time() - start_time
+    print(f"List matrix modification time: {list_time:.2f} seconds")
+
+    print("Modifying tuple matrix...")
+    start_time = time.time()
+    tuple_matrix = modify_tuple_matrix(tuple_matrix, size)
+    tuple_time = time.time() - start_time
+    print(f"Tuple matrix modification time: {tuple_time:.2f} seconds")
+
+# 运行测试
+test_time_consumption()
+
+
+
+作业2:
+import random
+from typing import Any, List, Dict
+
+def generate_random_sample(**kwargs) -> List[Any]:
+    """
+    生成任意嵌套数据类型的随机样本集
+    :param kwargs: 包含嵌套数据结构和样本个数的参数
+    :return: 随机样本集
+    """
+    def generate_random_element(data_type):
+        if data_type == 'int':
+            return random.randint(1, 100)
+        elif data_type == 'float':
+            return random.uniform(1, 100)
+        elif data_type == 'str':
+            return ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=5))
+        elif data_type == 'list':
+            return [generate_random_element(random.choice(['int', 'float', 'str'])) for _ in range(random.randint(1, 5))]
+        elif data_type == 'dict':
+            return {f'key_{i}': generate_random_element(random.choice(['int', 'float', 'str'])) for i in range(random.randint(1, 5))}
+        else:
+            raise ValueError(f"Unsupported data type: {data_type}")
+
+    sample_count = kwargs.get('sample_count', 1)
+    data_structure = kwargs.get('data_structure', 'int')
+    samples = [generate_random_element(data_structure) for _ in range(sample_count)]
+    return samples
+
+# 示例调用
+samples = generate_random_sample(sample_count=5, data_structure='list')
+print(samples)
+
+
+作业3:
+import functools
+import math
+from typing import List, Dict, Any
+
+def calculate_statistics(stats: List[str]):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(**kwargs):
+            samples = func(**kwargs)
+            numeric_values = []
+
+            def extract_numeric_values(data):
+                if isinstance(data, (int, float)):
+                    numeric_values.append(data)
+                elif isinstance(data, list):
+                    for item in data:
+                        extract_numeric_values(item)
+                elif isinstance(data, dict):
+                    for value in data.values():
+                        extract_numeric_values(value)
+
+            extract_numeric_values(samples)
+
+            results = {}
+            if 'SUM' in stats:
+                results['SUM'] = sum(numeric_values)
+            if 'AVG' in stats:
+                results['AVG'] = sum(numeric_values) / len(numeric_values) if numeric_values else 0
+            if 'VAR' in stats:
+                mean = results.get('AVG', 0)
+                results['VAR'] = sum((x - mean) ** 2 for x in numeric_values) / len(numeric_values) if numeric_values else 0
+            if 'RMSE' in stats:
+                results['RMSE'] = math.sqrt(results.get('VAR', 0))
+
+            return results
+        return wrapper
+    return decorator
+
+# 使用修饰器
+@calculate_statistics(stats=['SUM', 'AVG', 'VAR', 'RMSE'])
+def generate_random_sample(**kwargs) -> List[Any]:
+    def generate_random_element(data_type):
+        if data_type == 'int':
+            return random.randint(1, 100)
+        elif data_type == 'float':
+            return random.uniform(1, 100)
+        elif data_type == 'str':
+            return ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=5))
+        elif data_type == 'list':
+            return [generate_random_element(random.choice(['int', 'float', 'str'])) for _ in range(random.randint(1, 5))]
+        elif data_type == 'dict':
+            return {f'key_{i}': generate_random_element(random.choice(['int', 'float', 'str'])) for i in range(random.randint(1, 5))}
+        else:
+            raise ValueError(f"Unsupported data type: {data_type}")
+
+    sample_count = kwargs.get('sample_count', 1)
+    data_structure = kwargs.get('data_structure', 'int')
+    samples = [generate_random_element(data_structure) for _ in range(sample_count)]
+    return samples
+
+# 示例调用
+stats_results = generate_random_sample(sample_count=100, data_structure='list')
+print(stats_results)
