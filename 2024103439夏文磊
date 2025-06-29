@@ -1,1 +1,359 @@
+作业1:
+import time
+import random
+
+# 创建 10000×10000 的 list 矩阵
+def create_list_matrix(size):
+    return [[random.randint(1, 100) for _ in range(size)] for _ in range(size)]
+
+# 创建 10000×10000 的 tuple 矩阵
+def create_tuple_matrix(size):
+    return tuple(tuple(random.randint(1, 100) for _ in range(size)) for _ in range(size))
+
+# 修改 list 矩阵
+def modify_list_matrix(matrix, size):
+    for _ in range(size):
+        i, j = random.randint(0, size - 1), random.randint(0, size - 1)
+        matrix[i][j] = random.randint(1, 100)
+
+# 修改 tuple 矩阵（需要重新构造）
+def modify_tuple_matrix(matrix, size):
+    new_matrix = list(matrix)
+    for _ in range(size):
+        i, j = random.randint(0, size - 1), random.randint(0, size - 1)
+        new_matrix[i] = new_matrix[i][:j] + (random.randint(1, 100),) + new_matrix[i][j + 1:]
+    return tuple(new_matrix)
+
+# 测试时间消耗
+def test_time_consumption():
+    size = 10000
+    print("Creating list matrix...")
+    list_matrix = create_list_matrix(size)
+    print("Creating tuple matrix...")
+    tuple_matrix = create_tuple_matrix(size)
+
+    print("Modifying list matrix...")
+    start_time = time.time()
+    modify_list_matrix(list_matrix, size)
+    list_time = time.time() - start_time
+    print(f"List matrix modification time: {list_time:.2f} seconds")
+
+    print("Modifying tuple matrix...")
+    start_time = time.time()
+    tuple_matrix = modify_tuple_matrix(tuple_matrix, size)
+    tuple_time = time.time() - start_time
+    print(f"Tuple matrix modification time: {tuple_time:.2f} seconds")
+
+# 运行测试
+test_time_consumption()
+
+
+
+
+
+
+作业2:
+import random
+from typing import Any, List, Dict
+
+def generate_random_sample(**kwargs) -> List[Any]:
+    """
+    生成任意嵌套数据类型的随机样本集
+    :param kwargs: 包含嵌套数据结构和样本个数的参数
+    :return: 随机样本集
+    """
+    def generate_random_element(data_type):
+        if data_type == 'int':
+            return random.randint(1, 100)
+        elif data_type == 'float':
+            return random.uniform(1, 100)
+        elif data_type == 'str':
+            return ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=5))
+        elif data_type == 'list':
+            return [generate_random_element(random.choice(['int', 'float', 'str'])) for _ in range(random.randint(1, 5))]
+        elif data_type == 'dict':
+            return {f'key_{i}': generate_random_element(random.choice(['int', 'float', 'str'])) for i in range(random.randint(1, 5))}
+        else:
+            raise ValueError(f"Unsupported data type: {data_type}")
+
+    sample_count = kwargs.get('sample_count', 1)
+    data_structure = kwargs.get('data_structure', 'int')
+    samples = [generate_random_element(data_structure) for _ in range(sample_count)]
+    return samples
+
+# 示例调用
+samples = generate_random_sample(sample_count=5, data_structure='list')
+print(samples)
+
+
+
+
+
+
+作业3:
+import functools
+import math
+from typing import List, Dict, Any
+
+def calculate_statistics(stats: List[str]):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(**kwargs):
+            samples = func(**kwargs)
+            numeric_values = []
+
+            def extract_numeric_values(data):
+                if isinstance(data, (int, float)):
+                    numeric_values.append(data)
+                elif isinstance(data, list):
+                    for item in data:
+                        extract_numeric_values(item)
+                elif isinstance(data, dict):
+                    for value in data.values():
+                        extract_numeric_values(value)
+
+            extract_numeric_values(samples)
+
+            results = {}
+            if 'SUM' in stats:
+                results['SUM'] = sum(numeric_values)
+            if 'AVG' in stats:
+                results['AVG'] = sum(numeric_values) / len(numeric_values) if numeric_values else 0
+            if 'VAR' in stats:
+                mean = results.get('AVG', 0)
+                results['VAR'] = sum((x - mean) ** 2 for x in numeric_values) / len(numeric_values) if numeric_values else 0
+            if 'RMSE' in stats:
+                results['RMSE'] = math.sqrt(results.get('VAR', 0))
+
+            return results
+        return wrapper
+    return decorator
+
+# 使用修饰器
+@calculate_statistics(stats=['SUM', 'AVG', 'VAR', 'RMSE'])
+def generate_random_sample(**kwargs) -> List[Any]:
+    def generate_random_element(data_type):
+        if data_type == 'int':
+            return random.randint(1, 100)
+        elif data_type == 'float':
+            return random.uniform(1, 100)
+        elif data_type == 'str':
+            return ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=5))
+        elif data_type == 'list':
+            return [generate_random_element(random.choice(['int', 'float', 'str'])) for _ in range(random.randint(1, 5))]
+        elif data_type == 'dict':
+            return {f'key_{i}': generate_random_element(random.choice(['int', 'float', 'str'])) for i in range(random.randint(1, 5))}
+        else:
+            raise ValueError(f"Unsupported data type: {data_type}")
+
+    sample_count = kwargs.get('sample_count', 1)
+    data_structure = kwargs.get('data_structure', 'int')
+    samples = [generate_random_element(data_structure) for _ in range(sample_count)]
+    return samples
+
+# 示例调用
+stats_results = generate_random_sample(sample_count=100, data_structure='list')
+print(stats_results)
+
+
+
+
+结课作业
+项目目标
+开发一个车牌识别系统，能够从车辆图片中自动识别车牌号码。系统将包括以下主要步骤：
+图像预处理
+车牌定位
+字符分割
+字符识别
+结果验证和优化
+
+主要思路
+图像预处理：灰度化、二值化、去噪。
+车牌定位：边缘检测、轮廓提取、轮廓筛选。
+字符分割：水平投影法、垂直投影法。
+字符识别：模板匹配法或深度学习方法（可选）。
+结果验证：验证识别结果的正确性，优化识别过程。
+
+
+
+
+
+代码实现
+import cv2
+import numpy as np
+import os
+import loggingfrom sklearn.model_selection 
+import train_test_splitfrom sklearn.preprocessing
+import LabelEncoderfrom tensorflow.keras.models 
+import Sequentialfrom tensorflow.keras.layers 
+import Dense, Conv2D, Flatten, MaxPooling2Dfrom tensorflow.keras.utils import to_categorical
+# 图像预处理
+def preprocess_image(image_path):
+    image = cv2.imread(image_path)
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    blurred_image = cv2.GaussianBlur(gray_image, (5, 5), 0)
+    binary_image = cv2.adaptiveThreshold(blurred_image, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2)
+    return binary_image
+# 车牌定位
+def locate_license_plate(binary_image):
+    edges = cv2.Canny(binary_image, 100, 200)
+    contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        aspect_ratio = float(w) / h
+        area = cv2.contourArea(contour)
+        if 2 < aspect_ratio < 5 and 1000 < area < 5000:
+            return x, y, w, h
+    return None
+# 字符分割
+def segment_characters(plate_image):
+    height, width = plate_image.shape
+    horizontal_projection = np.sum(plate_image, axis=1)
+    vertical_projection = np.sum(plate_image, axis=0)
+    
+    # 水平投影分割
+    horizontal_threshold = 0.1 * np.max(horizontal_projection)
+    horizontal_segments = []
+    start = None
+    for i in range(height):
+        if horizontal_projection[i] > horizontal_threshold and start is None:
+            start = i
+        elif horizontal_projection[i] <= horizontal_threshold and start is not None:
+            horizontal_segments.append((start, i))
+            start = None
+    
+    # 垂直投影分割
+    vertical_threshold = 0.1 * np.max(vertical_projection)
+    vertical_segments = []
+    start = None
+    for i in range(width):
+        if vertical_projection[i] > vertical_threshold and start is None:
+            start = i
+        elif vertical_projection[i] <= vertical_threshold and start is not None:
+            vertical_segments.append((start, i))
+            start = None
+    
+    # 结合水平和垂直投影分割字符
+    characters = []
+    for h_start, h_end in horizontal_segments:
+        for v_start, v_end in vertical_segments:
+            char_image = plate_image[h_start:h_end, v_start:v_end]
+            characters.append(char_image)
+    
+    return characters
+# 字符识别
+def recognize_characters(character_images, template_library):
+    recognized_characters = []
+    for char_image in character_images:
+        max_similarity = 0
+        recognized_char = None
+        for template_char, template_image in template_library.items():
+            similarity = cv2.matchTemplate(char_image, template_image, cv2.TM_CCOEFF_NORMED)
+            if similarity > max_similarity:
+                max_similarity = similarity
+                recognized_char = template_char
+        recognized_characters.append(recognized_char)
+    return recognized_characters
+# 构建模板库
+def build_template_library():
+    template_library = {}
+    template_dir = "templates"
+    for filename in os.listdir(template_dir):
+        char = filename.split('.')[0]
+        template_image = cv2.imread(os.path.join(template_dir, filename), 0)
+        template_library[char] = template_image
+    return template_library
+# 图像显示函数
+def show_image(image, title="Image"):
+    cv2.imshow(title, image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+# 图像保存函数
+def save_image(image, filename):
+    cv2.imwrite(filename, image)
+# 日志记录函数
+def setup_logger():
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger()
+    return logger
+
+logger = setup_logger()
+# 多尺度车牌定位
+def multiscale_locate_license_plate(binary_image, scales=[0.5, 1.0, 1.5]):
+    for scale in scales:
+        resized_image = cv2.resize(binary_image, None, fx=scale, fy=scale, interpolation=cv2.INTER_LINEAR)
+        location = locate_license_plate(resized_image)
+        if location:
+            x, y, w, h = location
+            return int(x / scale), int(y / scale), int(w / scale), int(h / scale)
+    return None
+# 字符归一化
+def normalize_character(char_image, size=(20, 20)):
+    return cv2.resize(char_image, size, interpolation=cv2.INTER_AREA)
+# 深度学习字符识别
+def recognize_characters_with_model(character_images, model):
+    recognized_characters = []
+    for char_image in character_images:
+        char_image = normalize_character(char_image)
+        char_image = char_image / 255.0
+        char_image = np.expand_dims(char_image, axis=0)
+        prediction = model.predict(char_image)
+        recognized_char = chr(np.argmax(prediction) + ord('A'))
+        recognized_characters.append(recognized_char)
+    return recognized_characters
+# 构建深度学习模型
+def build_model():
+    model = Sequential()
+    model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(20, 20, 1)))
+    model.add(MaxPooling2D((2, 2)))
+    model.add(Flatten())
+    model.add(Dense(128, activation='relu'))
+    model.add(Dense(36, activation='softmax'))
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    return model
+# 训练深度学习模型
+def train_model(model, X_train, y_train):
+    X_train = np.array(X_train)
+    X_train = X_train.reshape(-1, 20, 20, 1)
+    y_train = to_categorical(y_train)
+    model.fit(X_train, y_train, epochs=10, batch_size=32)
+# 加载训练数据
+def load_training_data():
+    X = []
+    y = []
+    template_dir = "training_data"
+    for filename in os.listdir(template_dir):
+        char = filename.split('.')[0]
+        image = cv2.imread(os.path.join(template_dir, filename), 0)
+        X.append(image)
+        y.append(char)
+    return X, y
+# 主程序
+if __name__ == "__main__":
+    image_path = "car_image.jpg"
+    binary_image = preprocess_image(image_path)
+    license_plate_location = multiscale_locate_license_plate(binary_image)
+    if license_plate_location:
+        x, y, w, h = license_plate_location
+        license_plate_image = binary_image[y:y+h, x:x+w]
+        show_image(license_plate_image, "License Plate")
+        save_image(license_plate_image, "license_plate.png")
+        character_images = segment_characters(license_plate_image)
+        template_library = build_template_library()
+        license_plate_number = recognize_characters(character_images, template_library)
+        logger.info(f"Recognized License Plate Number: {''.join(license_plate_number)}")
+        
+        # 深度学习模型识别
+        X, y = load_training_data()
+        le = LabelEncoder()
+        y_encoded = le.fit_transform(y)
+        X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
+        model = build_model()
+        train_model(model, X_train, y_train)
+        license_plate_number_model = recognize_characters_with_model(character_images, model)
+        logger.info(f"Recognized License Plate Number (Model): {''.join(license_plate_number_model)}")
+    else:
+        logger.info("License plate not found.")
+项目通过计算机视觉技术实现了车牌识别功能。从图像预处理到车牌定位、字符分割和字符识别，每一步都采用了合适的算法和方法。
+
 
